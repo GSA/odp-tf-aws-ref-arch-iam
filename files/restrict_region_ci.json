@@ -2,66 +2,29 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Action": [
-        "iam:AttachRolePolicy",
-        "iam:CreatePolicy",
-        "iam:CreatePolicyVersion",
-        "iam:CreateRole",
-        "iam:DeletePolicy",
-        "iam:DeletePolicyVersion",
-        "iam:DeleteRole",
-        "iam:DetachRolePolicy",
-        "iam:GetPolicy",
-        "iam:GetPolicyVersion",
-        "iam:GetRole",
-        "iam:GetRolePolicy",
-        "iam:ListAttachedRolePolicies",
-        "iam:ListInstanceProfilesForRole",
-        "iam:ListPolicyVersions",
-        "iam:PassRole",
-        "iam:PutRolePolicy",
-        "iam:UpdateRoleDescription",
-        "iam:AddUserToGroup",
-        "iam:AttachGroupPolicy",
-        "iam:CreateGroup",
-        "iam:DeleteGroup",
-        "iam:DeleteGroupPolicy",
-        "iam:DetachGroupPolicy",
-        "iam:GetGroup",
-        "iam:GetGroupPolicy",
-        "iam:ListAttachedGroupPolicies",
-        "iam:ListGroupPolicies",
-        "iam:ListGroups",
-        "iam:ListGroupsForUser",
-        "iam:PutGroupPolicy",
-        "iam:RemoveUserFromGroup",
-        "iam:UpdateGroup",
-        "iam:UpdateAccountPasswordPolicy",
-        "iam:GetAccountPasswordPolicy"
-      ],
+      "Sid": "DenyPowerUserOutsideUS",
       "Effect": "Allow",
-      "Resource": "*"
-    },  
-    { 
-      "Effect":"Allow",
-      "NotAction":[  
-        "iam:ChangePassword",
-        "iam:CreateAccessKey",
-        "iam:DeleteServerCertificate",
-        "iam:DeleteVirtualMFADevice",
-        "iam:UpdateAccountPasswordPolicy"
+      "NotAction": [
+        "iam:*",
+        "organizations:*"
       ],
-      "Resource":"*"
+      "Resource": "*",
+        "Condition": {"StringEquals": {"aws:RequestedRegion": [
+            "us-east-1"
+        ]}}
     },
-    {  
-      "Effect":"Allow",
-      "Action":[  
+    {
+      "Effect": "Allow",
+      "Action": [
         "iam:CreateServiceLinkedRole",
         "iam:DeleteServiceLinkedRole",
         "iam:ListRoles",
         "organizations:DescribeOrganization"
       ],
-      "Resource":"*"
+      "Resource": "*",
+        "Condition": {"StringEquals": {"aws:RequestedRegion": [
+            "us-east-1"
+        ]}}
     }
   ]
 }
