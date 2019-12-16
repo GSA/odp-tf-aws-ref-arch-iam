@@ -355,7 +355,8 @@ resource "aws_iam_role_policy_attachment" "config" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
 }
 
-## resource "aws_iam_role_policy_attachment" "organization" {
+##
+resource "aws_iam_role_policy_attachment" "organization" {
   role       = aws_iam_role.config.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRoleForOrganizations"
 }
