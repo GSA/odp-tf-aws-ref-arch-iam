@@ -26,42 +26,42 @@ resource "aws_iam_account_password_policy" "grace_iam_password_policy" {
 ## User designated for automated deployments
 
 resource "aws_iam_user" "user_deployer" {
-  name = "${project}-deployer"
+  name = "${var.project}-deployer"
 }
 
 # --------------------
 # Groups
 
 resource "aws_iam_group" "devsecops" {
-  name = "${project}-devsecops"
+  name = "${var.project}-devsecops"
 }
 
 resource "aws_iam_group" "default" {
-  name = "${project}-default"
+  name = "${var.project}-default"
 }
 
 resource "aws_iam_group" "security_assessment" {
-  name = "${project}-security-assessment"
+  name = "${var.project}-security-assessment"
 }
 
 resource "aws_iam_group" "security_operations" {
-  name = "${project}-security-operations"
+  name = "${var.project}-security-operations"
 }
 
 resource "aws_iam_group" "finance" {
-  name = "${project}-finance"
+  name = "${var.project}-finance"
 }
 
 resource "aws_iam_group" "user_management" {
-  name = "${project}-user-management"
+  name = "${var.project}-user-management"
 }
 
 resource "aws_iam_group" "full_admin" {
-  name = "${project}-full-admin"
+  name = "${var.project}-full-admin"
 }
 
 resource "aws_iam_group" "incident_response" {
-  name = "${project}-incident-response"
+  name = "${var.project}-incident-response"
 }
 
 
@@ -71,7 +71,7 @@ resource "aws_iam_group" "incident_response" {
 ## grace mgmt billing role
 
 resource "aws_iam_role" "billing_management" {
-  name = "${project}-billing-management"
+  name = "${var.project}-billing-management"
 
   assume_role_policy = <<EOF
 {
@@ -92,7 +92,7 @@ EOF
 
 ## grace mgmt org admin role
 resource "aws_iam_role" "management_org_admin" {
-  name = "${project}-management-org-admin"
+  name = "${var.project}-management-org-admin"
 
   assume_role_policy = <<EOF
 {
@@ -113,7 +113,7 @@ EOF
 
 ## grace mgmt full admin role
 resource "aws_iam_role" "full_admin_management" {
-  name = "${project}-full-admin-management"
+  name = "${var.project}-full-admin-management"
 
   assume_role_policy = <<EOF
 {
@@ -134,7 +134,7 @@ EOF
 
 ## grace OPs admin role
 resource "aws_iam_role" "iam_admin_operations" {
-  name = "${project}-iam-admin-operations"
+  name = "${var.project}-iam-admin-operations"
 
   assume_role_policy = <<EOF
 {
@@ -155,7 +155,7 @@ EOF
 
 ## IAM ROLE for AWS Config
 resource "aws_iam_role" "config" {
-  name = "${project}-config"
+  name = "${var.project}-config"
 
   assume_role_policy = <<POLICY
 {
@@ -185,7 +185,7 @@ data "aws_iam_policy" "ReadOnlyAccess" {
 
 ## policy for MFA
 resource "aws_iam_policy" "force_mfa" {
-  name        = "${project}-force-mfa"
+  name        = "${var.project}-force-mfa"
   path        = "/"
   description = "Forces iam users to set MFA to access services"
   policy      = file("${path.module}/files/force_mfa.json")
@@ -195,7 +195,7 @@ resource "aws_iam_policy" "force_mfa" {
 ## region restriction for deployer
 
 resource "aws_iam_policy" "restrict_region_ci" {
-  name        = "${project}-restrict-region-ci"
+  name        = "${var.project}-restrict-region-ci"
   path        = "/"
   description = "limit PowerUserAccess used for CI to region us-east-1."
   policy      = file("${path.module}/files/restrict_region_ci.json")
@@ -206,7 +206,7 @@ resource "aws_iam_policy" "restrict_region_ci" {
 ## Policy for the deployment user
 
 resource "aws_iam_policy" "user_deployer" {
-  name        = "${project}-user-deployer"
+  name        = "${var.project}-user-deployer"
   path        = "/"
   description = "User policy for user_deployer."
   policy      = file("${path.module}/files/user_deployer.json")
@@ -216,14 +216,14 @@ resource "aws_iam_policy" "user_deployer" {
 
 ## Policy for RemoteSourceIPRestriction
 resource "aws_iam_policy" "remote_access" {
-  name        = "${project}-remote-access"
+  name        = "${var.project}-remote-access"
   path        = "/"
   description = "Restrict remote access to whitelisted source IPs"
   policy      = file("${path.module}/files/remote_access.json")
 }
 
 resource "aws_iam_policy" "assume_billing_management" {
-  name        = "${project}-assume-billing-management"
+  name        = "${var.project}-assume-billing-management"
   description = "Allow access to assume role for view only access to billing and usage"
   path        = "/"
   policy      = file("${path.module}/files/assume_billing_management.json")
@@ -233,7 +233,7 @@ resource "aws_iam_policy" "assume_billing_management" {
 
 ## billing policy
 resource "aws_iam_policy" "billing_management" {
-  name        = "${project}-billing-management"
+  name        = "${var.project}-billing-management"
   description = "Policy to allow access to view Billing and Usage data "
   path        = "/"
   policy      = file("${path.module}/files/billing_management.json")
@@ -241,7 +241,7 @@ resource "aws_iam_policy" "billing_management" {
 
 ## assume admin policy
 resource "aws_iam_policy" "assume_iam_admin_operations" {
-  name        = "${project}-assume-iam-admin-ops"
+  name        = "${var.project}-assume-iam-admin-ops"
   description = "Switch role to manage IAM "
   path        = "/"
   policy      = file("${path.module}/files/assume_iam_admin_operations.json")  
@@ -249,7 +249,7 @@ resource "aws_iam_policy" "assume_iam_admin_operations" {
 
 ## assume fulladmin policy
 resource "aws_iam_policy" "assume_full_admin_management" {
-  name        = "${project}-assume-full-admin-management"
+  name        = "${var.project}-assume-full-admin-management"
   description = "Break glass - switch role to gain full admin rights and Organizations access"
   path        = "/"
   policy      = file("${path.module}/files/assume_full_admin_management.json")  
@@ -257,7 +257,7 @@ resource "aws_iam_policy" "assume_full_admin_management" {
 
 ## Grace secops IR policy
 resource "aws_iam_policy" "incident_response_secops" {
-  name        = "${project}-incident-response-secops"
+  name        = "${var.project}-incident-response-secops"
   description = "SecOps incident response policy"
   path        = "/"
   policy      = file("${path.module}/files/incident_response_secops.json")  
@@ -265,7 +265,7 @@ resource "aws_iam_policy" "incident_response_secops" {
 
 ## grace ops admin policy
 resource "aws_iam_policy" "iam_admin_operations" {
-  name        = "${project}-iam-admin-operations"
+  name        = "${var.project}-iam-admin-operations"
   description = "Policy to allow full access to manage IAM resources"
   path        = "/"
   policy      = file("${path.module}/files/iam_admin_operations.json")
@@ -274,7 +274,7 @@ resource "aws_iam_policy" "iam_admin_operations" {
 
 ## grace mgmt full admin policy
 resource "aws_iam_policy" "full_admin_management" {
-  name        = "${project}-full-admin-management"
+  name        = "${var.project}-full-admin-management"
   description = "Policy to allow full admin access"
   path        = "/"
   policy      = file("${path.module}/files/full_admin_management.json")
