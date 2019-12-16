@@ -1,0 +1,15 @@
+{  
+  "Version":"2012-10-17",
+  "Statement":[  
+     {  
+        "Effect":"Allow",
+        "Action":[  
+           "sts:AssumeRole"
+        ],
+        "Resource":[  
+           "arn:aws:iam::*:role/${project}-management-org-admin",
+           "arn:aws:iam::${var.aws_account_id}:role/${project}-full-admin-management"
+        ]
+     }
+  ]
+}
