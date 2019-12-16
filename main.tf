@@ -2,183 +2,363 @@ provider "aws" {
   region     = var.aws_region
 }
 
-data "aws_ami" "ec2-ami-private" {
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
-  filter {
-    name   = "name"
-    values = "${var.tag_for_ami_name_private}"
-  }
-  owners  = ["099720109477"]
-  most_recent = true
+# --------------------
+# Password Policy
+
+## IAM password  Policy
+resource "aws_iam_account_password_policy" "grace_iam_password_policy" {
+  minimum_password_length        = 16
+  require_uppercase_characters   = true
+  require_lowercase_characters   = true
+  require_numbers                = true
+  require_symbols                = true
+  allow_users_to_change_password = true
+  max_password_age               = 90
+  password_reuse_prevention      = 10
 }
 
-data "aws_ami" "ec2-ami-jump" {
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
-  filter {
-    name   = "name"
-    values = "${var.tag_for_ami_name_jump}"
-  }
-  owners  = ["099720109477"]
-  most_recent = true
+# --------------------
+# Users
+
+
+
+
+## User designated for automated deployments
+
+resource "aws_iam_user" "user_deployer" {
+  name = "${project}-deployer"
 }
 
-resource "aws_security_group" "web_server_sg" {
-  name = "web_server_sg"
-  vpc_id = var.vpc_id
+# --------------------
+# Groups
 
-  # SSH access from the VPC
-  ingress {
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = [ "${aws_instance.jump_server.private_ip}/32" ]
-  }
-
-  ingress {
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
-    security_groups = [ "${aws_security_group.lb_sg.id}" ]
-  }
+resource "aws_iam_group" "devsecops" {
+  name = "${project}-devsecops"
 }
 
-resource "aws_security_group" "jump_host_sg" {
-  name = "jump_host_sg"
-  vpc_id = var.vpc_id
-
-  ingress {
-      from_port   = 22
-      to_port     = 22
-      protocol    = "tcp"
-      cidr_blocks = var.jump_host_allowed_cidr_list
-  }
-
-  egress {
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-    cidr_blocks = ["${var.subnet_private_1a_cidr}", "${var.subnet_private_1b_cidr}"]
-  }
+resource "aws_iam_group" "default" {
+  name = "${project}-default"
 }
 
-resource "aws_security_group" "lb_sg" {
-  name = "lb_sg"
-  vpc_id = var.vpc_id
+resource "aws_iam_group" "security_assessment" {
+  name = "${project}-security-assessment"
+}
 
-  ingress {
-    from_port = 0
-    to_port = 0
-    protocol    = "-1"
-    cidr_blocks = var.application_allowed_cidr_list
-  }
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["${var.subnet_private_1a_cidr}", "${var.subnet_private_1b_cidr}"]
-  }
+resource "aws_iam_group" "security_operations" {
+  name = "${project}-security-operations"
+}
+
+resource "aws_iam_group" "finance" {
+  name = "${project}-finance"
+}
+
+resource "aws_iam_group" "user_management" {
+  name = "${project}-user-management"
+}
+
+resource "aws_iam_group" "full_admin" {
+  name = "${project}-full-admin"
+}
+
+resource "aws_iam_group" "incident_response" {
+  name = "${project}-incident-response"
 }
 
 
+# --------------------
+# Roles
 
-#############################
-# Create instances
+## grace mgmt billing role
 
+resource "aws_iam_role" "billing_management" {
+  name = "${project}-billing-management"
 
-# Jump host
-resource "aws_instance" "jump_server" {
-  ami           = "${data.aws_ami.ec2-ami-jump.id}" #"${var.jump_server_ami}"
-  associate_public_ip_address = "true"
-  instance_type = "${var.instance_type}"
-  subnet_id = "${var.subnet_public_1a_id}"
-  vpc_security_group_ids = ["${aws_security_group.jump_host_sg.id}"]
-  key_name = "${var.aws_key_name}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${var.aws_account_id}:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
 
-  tags = {
-    Name = "${var.jump_server_name}"
-  }
 }
 
-# Application hosts
+## grace mgmt org admin role
+resource "aws_iam_role" "management_org_admin" {
+  name = "${project}-management-org-admin"
 
-resource "aws_instance" "instance_1" {
-  ami           = "${data.aws_ami.ec2-ami-private.id}"
-  instance_type = "${var.instance_type}"
-  subnet_id = "${var.subnet_private_1a_id}"
-  vpc_security_group_ids = ["${aws_security_group.web_server_sg.id}"]
-  key_name = "${var.aws_key_name}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${var.aws_account_id}:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
 
-  tags = {
-    Name = "${var.instance_1_name}"
-  }
 }
 
-resource "aws_instance" "instance_2" {
-  ami           = "${data.aws_ami.ec2-ami-private.id}"
-  instance_type = "${var.instance_type}"
-  subnet_id = "${var.subnet_private_1b_id}"
-  vpc_security_group_ids = ["${aws_security_group.web_server_sg.id}"]
-  key_name = "${var.aws_key_name}"
+## grace mgmt full admin role
+resource "aws_iam_role" "full_admin_management" {
+  name = "${project}-full-admin-management"
 
-  tags = {
-    Name = "${var.instance_2_name}"
-  }
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${var.aws_account_id}:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+}
+
+## grace OPs admin role
+resource "aws_iam_role" "iam_admin_operations" {
+  name = "${project}-iam-admin-operations"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${var.aws_account_id}:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+}
+
+## IAM ROLE for AWS Config
+resource "aws_iam_role" "config" {
+  name = "${project}-config"
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "config.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+POLICY
+
+}
+
+# --------------------
+# Policies
+
+
+data "aws_iam_policy" "ReadOnlyAccess" {
+  arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
+
+## policy for MFA
+resource "aws_iam_policy" "force_mfa" {
+  name        = "${project}-force-mfa"
+  path        = "/"
+  description = "Forces iam users to set MFA to access services"
+  policy      = file("${path.module}/files/force_mfa.json")
 }
 
 
-###############################
-# Configure ALB
+## region restriction for deployer
 
-resource "aws_lb" "alb" {
-  name               = "odp-ra-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = ["${aws_security_group.lb_sg.id}"]
-  subnets            = ["${var.subnet_private_1a_id}", "${var.subnet_private_1b_id}"] # direct to public subnets 
-
-  # access_logs {
-  #   bucket  = "${aws_s3_bucket.lb_logs.bucket}"
-  #   prefix  = "test-lb"
-  #   enabled = true
-  # }
-
-  # tags = {
-  #   Environment = "production"
-  # }
-}
-
-resource "aws_lb_target_group" "alb_target_group" {
-  name     = "alb-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = "${var.vpc_id}"
+resource "aws_iam_policy" "restrict_region_ci" {
+  name        = "${project}-restrict-region-ci"
+  path        = "/"
+  description = "limit PowerUserAccess used for CI to region us-east-1."
+  policy      = file("${path.module}/files/restrict_region_ci.json")
 }
 
 
-resource "aws_lb_target_group_attachment" "alb_attatchment_1" {
-  target_group_arn = "${aws_lb_target_group.alb_target_group.arn}"
-  target_id        = "${aws_instance.instance_1.id}"
-  port             = 80
+
+## Policy for the deployment user
+
+resource "aws_iam_policy" "user_deployer" {
+  name        = "${project}-user-deployer"
+  path        = "/"
+  description = "User policy for user_deployer."
+  policy      = file("${path.module}/files/user_deployer.json")
 }
 
-resource "aws_lb_target_group_attachment" "alb_attatchment_2" {
-  target_group_arn = "${aws_lb_target_group.alb_target_group.arn}"
-  target_id        = "${aws_instance.instance_2.id}"
-  port             = 80
+
+
+## Policy for RemoteSourceIPRestriction
+resource "aws_iam_policy" "remote_access" {
+  name        = "${project}-remote-access"
+  path        = "/"
+  description = "Restrict remote access to whitelisted source IPs"
+  policy      = file("${path.module}/files/remote_access.json")
 }
 
-resource "aws_lb_listener" "alb_listener" {
-  load_balancer_arn = "${aws_lb.alb.arn}"
-  port = 80
-  protocol = "HTTP"
-  default_action {
-    type = "forward"
-    target_group_arn = "${aws_lb_target_group.alb_target_group.arn}"
-  }
+resource "aws_iam_policy" "assume_billing_management" {
+  name        = "${project}-assume-billing-management"
+  description = "Allow access to assume role for view only access to billing and usage"
+  path        = "/"
+  policy      = file("${path.module}/files/assume_billing_management.json")
+
 }
+
+
+## billing policy
+resource "aws_iam_policy" "billing_management" {
+  name        = "${project}-billing-management"
+  description = "Policy to allow access to view Billing and Usage data "
+  path        = "/"
+  policy      = file("${path.module}/files/billing_management.json")
+}
+
+## assume admin policy
+resource "aws_iam_policy" "assume_iam_admin_operations" {
+  name        = "${project}-assume-iam-admin-ops"
+  description = "Switch role to manage IAM "
+  path        = "/"
+  policy      = file("${path.module}/files/assume_iam_admin_operations.json")  
+}
+
+## assume fulladmin policy
+resource "aws_iam_policy" "assume_full_admin_management" {
+  name        = "${project}-assume-full-admin-management"
+  description = "Break glass - switch role to gain full admin rights and Organizations access"
+  path        = "/"
+  policy      = file("${path.module}/files/assume_full_admin_management.json")  
+}
+
+## Grace secops IR policy
+resource "aws_iam_policy" "incident_response_secops" {
+  name        = "${project}-incident-response-secops"
+  description = "SecOps incident response policy"
+  path        = "/"
+  policy      = file("${path.module}/files/incident_response_secops.json")  
+}
+
+## grace ops admin policy
+resource "aws_iam_policy" "iam_admin_operations" {
+  name        = "${project}-iam-admin-operations"
+  description = "Policy to allow full access to manage IAM resources"
+  path        = "/"
+  policy      = file("${path.module}/files/iam_admin_operations.json")
+}
+
+
+## grace mgmt full admin policy
+resource "aws_iam_policy" "full_admin_management" {
+  name        = "${project}-full-admin-management"
+  description = "Policy to allow full admin access"
+  path        = "/"
+  policy      = file("${path.module}/files/full_admin_management.json")
+}
+
+
+
+# --------------------
+# Policy Attachements
+
+
+# Users - Policy Attachements 
+
+## Policy for the deployment user 
+
+resource "aws_iam_user_policy_attachment" "user_deployer" {
+  user       = "${aws_iam_user.user_deployer.name}"
+  policy_arn = "${aws_iam_policy.user_deployer.arn}"
+}
+
+## circle CI policy
+resource "aws_iam_user_policy_attachment" "restrict_region_ci" {
+  user       = aws_iam_user.user_deployer.name
+  policy_arn = aws_iam_policy.restrict_region_ci.arn
+}
+
+# Groups - Policy Attachements 
+
+## billing assume
+resource "aws_iam_group_policy_attachment" "assume_billing_management" {
+  group      = aws_iam_group.finance.name
+  policy_arn = aws_iam_policy.assume_billing_management.arn
+}
+
+## Grace assume IAM ADMIN
+resource "aws_iam_group_policy_attachment" "assume_iam_admin_operations" {
+  group      = aws_iam_group.user_management.name
+  policy_arn = aws_iam_policy.assume_iam_admin_operations.arn
+}
+
+## Full admin
+resource "aws_iam_group_policy_attachment" "assume_full_admin_management" {
+  group      = aws_iam_group.full_admin.name
+  policy_arn = aws_iam_policy.assume_full_admin_management.arn
+}
+
+## 
+
+resource "aws_iam_group_policy_attachment" "incident_response_secops" {
+  group      = aws_iam_group.incident_response.name
+  policy_arn = aws_iam_policy.incident_response_secops.arn
+}
+
+# Roles - Policy Attachements 
+
+##  billing policy attach
+
+resource "aws_iam_role_policy_attachment" "billing_management" {
+  role       = aws_iam_role.billing_management.name
+  policy_arn = aws_iam_policy.billing_management.arn
+}
+
+##  admin attach
+resource "aws_iam_role_policy_attachment" "iam_admin_operations" {
+  role       = aws_iam_role.iam_admin_operations.name
+  policy_arn = aws_iam_policy.iam_admin_operations.arn
+}
+
+## grace mgmt full admin attach
+resource "aws_iam_role_policy_attachment" "full_admin_management" {
+  role       = aws_iam_role.full_admin_management.name
+  policy_arn = aws_iam_policy.full_admin_management.arn
+}
+
+## IAM Policy for AWS Config
+resource "aws_iam_role_policy_attachment" "config" {
+  role       = aws_iam_role.config.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRole"
+}
+
+## resource "aws_iam_role_policy_attachment" "organization" {
+  role       = aws_iam_role.config.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRoleForOrganizations"
+}
+
+
+

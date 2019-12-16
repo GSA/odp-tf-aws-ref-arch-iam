@@ -6,3 +6,15 @@ variable "aws_region" {
 
 
 
+variable "env" {
+  description = "AWS region to launch servers."
+  default     = "sandbox"
+}
+
+variable "aws_account_id" {
+  description = "aws account ID"
+}
+
+variable "ip_whitelist" {
+  description = "source IP whitelist"
+}
