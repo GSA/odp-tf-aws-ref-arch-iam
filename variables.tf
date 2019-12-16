@@ -4,8 +4,6 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-
-
 variable "env" {
   description = "AWS region to launch servers."
   default     = "sandbox"
@@ -17,4 +15,8 @@ variable "aws_account_id" {
 
 variable "ip_whitelist" {
   description = "source IP whitelist"
+}
+
+variable "project" {
+  description = "Project name"
 }

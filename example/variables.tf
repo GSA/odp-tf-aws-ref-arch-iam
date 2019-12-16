@@ -18,3 +18,8 @@ variable "ip_whitelist" {
   description = "source IP whitelist"
   default = "10.1.1.0/24"
 }
+
+variable "project" {
+  description = "Project name"
+  default = "odp-ref-arch"
+}
