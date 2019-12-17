@@ -180,8 +180,7 @@ POLICY
 ## Not 100% sure the idea of having dependencies in this role is a good one.
 ## Role for cloudwatch delivery.
 resource "aws_iam_role" "cloudwatch_delivery" {
-  name = "${var.iam_role_name}"
-
+  name = "${var.project}-cloudwatch_delivery"
   assume_role_policy = <<END_OF_POLICY
 {
   "Version": "2012-10-17",
@@ -415,7 +414,7 @@ resource "aws_iam_role_policy_attachment" "organization" {
 resource "aws_iam_policy_attachment" "read_only_access" {
   name       = "ReadOnlyAccess_attachment"
   groups     = [aws_iam_group.security_assessment.name, aws_iam_group.security_operations.name, aws_iam_group.devsecops.name, aws_iam_group.incident_response.name]
-  policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
+  policy_arn = data.aws_iam_policy.read_only_access.arn
 }
 
 
