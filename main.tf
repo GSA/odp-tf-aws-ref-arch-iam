@@ -2,6 +2,10 @@ provider "aws" {
   region     = var.aws_region
 }
 
+# Data lookups
+
+
+
 # --------------------
 # Password Policy
 
@@ -20,10 +24,14 @@ resource "aws_iam_account_password_policy" "grace_iam_password_policy" {
 # --------------------
 # Users
 
-
+resource "aws_iam_group" "devops" {
+  name = "${var.project}-devsecops"
+}
 
 
 ## User designated for automated deployments
+
+#Remove and make sure it is not tied into anything else downstream
 
 resource "aws_iam_user" "user_deployer" {
   name = "${var.project}-deployer"
@@ -64,31 +72,13 @@ resource "aws_iam_group" "incident_response" {
   name = "${var.project}-incident-response"
 }
 
+# Create network_admin 
+
+
 
 # --------------------
 # Roles
 
-## grace mgmt billing role
-
-resource "aws_iam_role" "billing_management" {
-  name = "${var.project}-billing-management"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::${var.aws_account_id}:root"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
-
-}
 
 ## grace mgmt org admin role
 resource "aws_iam_role" "management_org_admin" {
@@ -212,7 +202,7 @@ resource "aws_iam_policy" "force_mfa" {
   name        = "${var.project}-force-mfa"
   path        = "/"
   description = "Forces iam users to set MFA to access services"
-  policy      = file("${path.module}/files/force_mfa.json")
+  policy      = file("${path.module}/files/force_mfa_${env}.json")
 }
 
 
@@ -237,30 +227,12 @@ resource "aws_iam_policy" "user_deployer" {
 }
 
 
-
 ## Policy for RemoteSourceIPRestriction
 resource "aws_iam_policy" "remote_access" {
   name        = "${var.project}-remote-access"
   path        = "/"
   description = "Restrict remote access to whitelisted source IPs"
-  policy      = file("${path.module}/files/remote_access.json")
-}
-
-resource "aws_iam_policy" "assume_billing_management" {
-  name        = "${var.project}-assume-billing-management"
-  description = "Allow access to assume role for view only access to billing and usage"
-  path        = "/"
-  policy      = file("${path.module}/files/assume_billing_management.json")
-
-}
-
-
-## billing policy
-resource "aws_iam_policy" "billing_management" {
-  name        = "${var.project}-billing-management"
-  description = "Policy to allow access to view Billing and Usage data "
-  path        = "/"
-  policy      = file("${path.module}/files/billing_management.json")
+  policy      = templatefile("${path.module}/templates/remote_access.tpl",)
 }
 
 
@@ -277,7 +249,7 @@ resource "aws_iam_policy" "assume_iam_admin_operations" {
   name        = "${var.project}-assume-iam-admin-ops"
   description = "Switch role to manage IAM "
   path        = "/"
-  policy      = file("${path.module}/files/assume_iam_admin_operations.json")  
+  policy      = templatefile("${path.module}/templates/assume_iam_admin_operations.tpl",)  
 }
 
 ## assume fulladmin policy
@@ -285,7 +257,7 @@ resource "aws_iam_policy" "assume_full_admin_management" {
   name        = "${var.project}-assume-full-admin-management"
   description = "Break glass - switch role to gain full admin rights and Organizations access"
   path        = "/"
-  policy      = file("${path.module}/files/assume_full_admin_management.json")  
+  policy      = templatefile("${path.module}/templates/assume_full_admin_management.tpl",) 
 }
 
 ## Grace secops IR policy
@@ -336,11 +308,6 @@ resource "aws_iam_user_policy_attachment" "restrict_region_ci" {
 
 # Groups - Policy Attachements 
 
-## billing assume
-resource "aws_iam_group_policy_attachment" "assume_billing_management" {
-  group      = aws_iam_group.finance.name
-  policy_arn = aws_iam_policy.assume_billing_management.arn
-}
 
 ## Grace assume IAM ADMIN
 resource "aws_iam_group_policy_attachment" "assume_iam_admin_operations" {
@@ -376,12 +343,6 @@ resource "aws_iam_group_policy_attachment" "default_remote_access" {
 
 # Roles - Policy Attachements 
 
-##  billing policy attach
-
-resource "aws_iam_role_policy_attachment" "billing_management" {
-  role       = aws_iam_role.billing_management.name
-  policy_arn = aws_iam_policy.billing_management.arn
-}
 
 ##  admin attach
 resource "aws_iam_role_policy_attachment" "iam_admin_operations" {
