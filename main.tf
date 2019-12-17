@@ -209,7 +209,7 @@ resource "aws_iam_policy" "assume_org_account_management" {
   name        = "${var.project}-assume-org-account-management"
   description = "Allow access to assume role for view only access to billing and usage"
   path        = "/"
-  policy      = file("${path.module}/files/assume_org_account_management.json")  
+  policy      = file("${path.module}/files/assume_org_account_management.json",{ project = "${var.ip_whitelist }" )  
 }
 
 ## assume admin policy
@@ -217,7 +217,7 @@ resource "aws_iam_policy" "assume_iam_admin_operations" {
   name        = "${var.project}-assume-iam-admin-ops"
   description = "Switch role to manage IAM "
   path        = "/"
-  policy      = templatefile("${path.module}/templates/assume_iam_admin_operations.tpl",)  
+  policy      = templatefile("${path.module}/templates/assume_iam_admin_operations.tpl", { project = "${var.project}" } )  
 }
 
 ## assume fulladmin policy
@@ -225,7 +225,7 @@ resource "aws_iam_policy" "assume_full_admin_management" {
   name        = "${var.project}-assume-full-admin-management"
   description = "Break glass - switch role to gain full admin rights and Organizations access"
   path        = "/"
-  policy      = templatefile("${path.module}/templates/assume_full_admin_management.tpl",) 
+  policy      = templatefile("${path.module}/templates/assume_full_admin_management.tpl", { project = "${var.project}" } ) 
 }
 
 ## Grace secops IR policy
