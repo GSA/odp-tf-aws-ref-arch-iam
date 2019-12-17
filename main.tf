@@ -191,7 +191,7 @@ resource "aws_iam_policy" "force_mfa" {
   name        = "${var.project}-force-mfa"
   path        = "/"
   description = "Forces iam users to set MFA to access services"
-  policy      = file("${path.module}/files/force_mfa_${env}.json")
+  policy      = file("${path.module}/files/force_mfa.json")
 }
 
 
