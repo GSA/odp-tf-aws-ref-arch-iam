@@ -175,11 +175,35 @@ POLICY
 
 }
 
+## Consider moving to cloudwatch?
+## Not 100% sure the idea of having dependencies in this role is a good one.
+## Role for cloudwatch delivery.
+resource "aws_iam_role" "cloudwatch_delivery" {
+  name = "${var.iam_role_name}"
+
+  assume_role_policy = <<END_OF_POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "cloudtrail.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+END_OF_POLICY
+}
+
+
 # --------------------
 # Policies
 
 
-data "aws_iam_policy" "ReadOnlyAccess" {
+data "aws_iam_policy" "read_only_access" {
   arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
 
@@ -373,19 +397,19 @@ resource "aws_iam_role_policy_attachment" "organization" {
 
 
 #Readonly Access Role
-resource "aws_iam_policy_attachment" "ReadOnlyAccess_attach" {
+resource "aws_iam_policy_attachment" "read_only_access" {
   name       = "ReadOnlyAccess_attachment"
   groups     = [aws_iam_group.security_assessment.name, aws_iam_group.security_operations.name, aws_iam_group.devsecops.name, aws_iam_group.incident_response.name]
   policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
 }
 
-resource "aws_iam_group_policy_attachment" "grace_default_mfa_prod_attach" {
-  group      = aws_iam_group.default_group.name
-  policy_arn = aws_iam_policy.grace_mfa.arn
+resource "aws_iam_group_policy_attachment" "default_mfa" {
+  group      = aws_iam_group.default.name
+  policy_arn = aws_iam_policy.force_mfa.arn
 }
 
-resource "aws_iam_group_policy_attachment" "grace_default_remote_prod_attach" {
-  group      = aws_iam_group.default_group.name
+resource "aws_iam_group_policy_attachment" "default_remote_access" {
+  group      = aws_iam_group.default.name
   policy_arn = aws_iam_policy.grace_remoteAccess_policy.arn
 }
 
