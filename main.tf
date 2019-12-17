@@ -239,6 +239,15 @@ resource "aws_iam_policy" "billing_management" {
   policy      = file("${path.module}/files/billing_management.json")
 }
 
+
+## assume organization account
+resource "aws_iam_policy" "assume_org_account_management" {
+  name        = "${var.project}-assume-org-account-management"
+  description = "Allow access to assume role for view only access to billing and usage"
+  path        = "/"
+  policy      = file("${path.module}/files/assume_org_account_management.json")  
+}
+
 ## assume admin policy
 resource "aws_iam_policy" "assume_iam_admin_operations" {
   name        = "${var.project}-assume-iam-admin-ops"
@@ -361,5 +370,28 @@ resource "aws_iam_role_policy_attachment" "organization" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigRoleForOrganizations"
 }
 
+
+
+#Readonly Access Role
+resource "aws_iam_policy_attachment" "ReadOnlyAccess_attach" {
+  name       = "ReadOnlyAccess_attachment"
+  groups     = [aws_iam_group.security_assessment.name, aws_iam_group.security_operations.name, aws_iam_group.devsecops.name, aws_iam_group.incident_response.name]
+  policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
+}
+
+resource "aws_iam_group_policy_attachment" "grace_default_mfa_prod_attach" {
+  group      = aws_iam_group.default_group.name
+  policy_arn = aws_iam_policy.grace_mfa.arn
+}
+
+resource "aws_iam_group_policy_attachment" "grace_default_remote_prod_attach" {
+  group      = aws_iam_group.default_group.name
+  policy_arn = aws_iam_policy.grace_remoteAccess_policy.arn
+}
+
+resource "aws_iam_policy" "grace_management_assume_org_account_access_role" {
+  name        = "grace-management-assumeOrgAccountAccessRole"
+  description = "Allow access to assume role for view only access to billing and usage"
+}
 
 
