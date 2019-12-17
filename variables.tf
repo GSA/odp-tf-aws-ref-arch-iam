@@ -15,7 +15,6 @@ variable "aws_account_id" {
 
 variable "ip_whitelist" {
   description = "source IP whitelist"
-  default = "159.142.0.0/16"
 }
 
 variable "project" {
