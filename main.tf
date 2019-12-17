@@ -324,8 +324,8 @@ resource "aws_iam_policy" "full_admin_management" {
 ## Policy for the deployment user 
 
 resource "aws_iam_user_policy_attachment" "user_deployer" {
-  user       = "${aws_iam_user.user_deployer.name}"
-  policy_arn = "${aws_iam_policy.user_deployer.arn}"
+  user       = aws_iam_user.user_deployer.name
+  policy_arn = aws_iam_policy.user_deployer.arn
 }
 
 ## circle CI policy
