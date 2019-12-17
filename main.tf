@@ -231,6 +231,7 @@ resource "aws_iam_policy" "assume_full_admin_management" {
   path        = "/"
   policy      = templatefile("${path.module}/templates/assume_full_admin_management.tpl", { 
     project = var.project 
+    aws_account_id = var.aws_account_id
     } ) 
 }
 

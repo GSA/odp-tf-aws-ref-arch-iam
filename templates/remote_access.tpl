@@ -9,7 +9,7 @@
       "Condition": {  
          "NotIpAddress":{  
             "aws:SourceIp":[  
-               "${var.ip_whitelist}"
+               "${ip_whitelist}"
             ]
          }
       }
