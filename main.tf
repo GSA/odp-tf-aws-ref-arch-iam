@@ -24,18 +24,7 @@ resource "aws_iam_account_password_policy" "grace_iam_password_policy" {
 # --------------------
 # Users
 
-resource "aws_iam_group" "devops" {
-  name = "${var.project}-devsecops"
-}
 
-
-## User designated for automated deployments
-
-#Remove and make sure it is not tied into anything else downstream
-
-resource "aws_iam_user" "user_deployer" {
-  name = "${var.project}-deployer"
-}
 
 # --------------------
 # Groups
@@ -206,27 +195,6 @@ resource "aws_iam_policy" "force_mfa" {
 }
 
 
-## region restriction for deployer
-
-resource "aws_iam_policy" "restrict_region_ci" {
-  name        = "${var.project}-restrict-region-ci"
-  path        = "/"
-  description = "limit PowerUserAccess used for CI to region us-east-1."
-  policy      = file("${path.module}/files/restrict_region_ci.json")
-}
-
-
-
-## Policy for the deployment user
-
-resource "aws_iam_policy" "user_deployer" {
-  name        = "${var.project}-user-deployer"
-  path        = "/"
-  description = "User policy for user_deployer."
-  policy      = file("${path.module}/files/user_deployer.json")
-}
-
-
 ## Policy for RemoteSourceIPRestriction
 resource "aws_iam_policy" "remote_access" {
   name        = "${var.project}-remote-access"
@@ -290,21 +258,6 @@ resource "aws_iam_policy" "full_admin_management" {
 # --------------------
 # Policy Attachements
 
-
-# Users - Policy Attachements 
-
-## Policy for the deployment user 
-
-resource "aws_iam_user_policy_attachment" "user_deployer" {
-  user       = aws_iam_user.user_deployer.name
-  policy_arn = aws_iam_policy.user_deployer.arn
-}
-
-## circle CI policy
-resource "aws_iam_user_policy_attachment" "restrict_region_ci" {
-  user       = aws_iam_user.user_deployer.name
-  policy_arn = aws_iam_policy.restrict_region_ci.arn
-}
 
 # Groups - Policy Attachements 
 
