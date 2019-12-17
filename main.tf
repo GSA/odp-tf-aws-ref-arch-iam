@@ -200,7 +200,7 @@ resource "aws_iam_policy" "remote_access" {
   name        = "${var.project}-remote-access"
   path        = "/"
   description = "Restrict remote access to whitelisted source IPs"
-  policy      = templatefile("${path.module}/templates/remote_access.tpl", { project = var.ip_whitelist  } )
+  policy      = templatefile("${path.module}/templates/remote_access.tpl", { ip_whitelist = var.ip_whitelist  } )
 }
 
 
