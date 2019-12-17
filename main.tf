@@ -200,7 +200,7 @@ resource "aws_iam_policy" "remote_access" {
   name        = "${var.project}-remote-access"
   path        = "/"
   description = "Restrict remote access to whitelisted source IPs"
-  policy      = templatefile("${path.module}/templates/remote_access.tpl",)
+  policy      = templatefile("${path.module}/templates/remote_access.tpl", { project = "${var.ip_whitelist }" } )
 }
 
 
@@ -209,7 +209,7 @@ resource "aws_iam_policy" "assume_org_account_management" {
   name        = "${var.project}-assume-org-account-management"
   description = "Allow access to assume role for view only access to billing and usage"
   path        = "/"
-  policy      = file("${path.module}/files/assume_org_account_management.json",{ project = "${var.ip_whitelist }" )  
+  policy      = file("${path.module}/files/assume_org_account_management.json" )  
 }
 
 ## assume admin policy
