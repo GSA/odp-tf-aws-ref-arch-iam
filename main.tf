@@ -112,6 +112,7 @@ EOF
 }
 
 ## grace mgmt full admin role
+
 resource "aws_iam_role" "full_admin_management" {
   name = "${var.project}-full-admin-management"
 
@@ -361,6 +362,19 @@ resource "aws_iam_group_policy_attachment" "incident_response_secops" {
   policy_arn = aws_iam_policy.incident_response_secops.arn
 }
 
+# Defaults taken from Grace prod
+
+resource "aws_iam_group_policy_attachment" "default_mfa" {
+  group      = aws_iam_group.default.name
+  policy_arn = aws_iam_policy.force_mfa.arn
+}
+
+resource "aws_iam_group_policy_attachment" "default_remote_access" {
+  group      = aws_iam_group.default.name
+  policy_arn = aws_iam_policy.remote_access.arn
+}
+
+
 # Roles - Policy Attachements 
 
 ##  billing policy attach
@@ -396,26 +410,15 @@ resource "aws_iam_role_policy_attachment" "organization" {
 
 
 
-#Readonly Access Role
+#Readonly Access Role - From Grace Prod
+
 resource "aws_iam_policy_attachment" "read_only_access" {
   name       = "ReadOnlyAccess_attachment"
   groups     = [aws_iam_group.security_assessment.name, aws_iam_group.security_operations.name, aws_iam_group.devsecops.name, aws_iam_group.incident_response.name]
   policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
 }
 
-resource "aws_iam_group_policy_attachment" "default_mfa" {
-  group      = aws_iam_group.default.name
-  policy_arn = aws_iam_policy.force_mfa.arn
-}
 
-resource "aws_iam_group_policy_attachment" "default_remote_access" {
-  group      = aws_iam_group.default.name
-  policy_arn = aws_iam_policy.grace_remoteAccess_policy.arn
-}
 
-resource "aws_iam_policy" "grace_management_assume_org_account_access_role" {
-  name        = "grace-management-assumeOrgAccountAccessRole"
-  description = "Allow access to assume role for view only access to billing and usage"
-}
 
 
