@@ -1,3 +1,7 @@
+provider "aws" {
+  region  = "us-east-1"
+}
+
 module "iam" {
   source = "../"
   aws_region = "${var.aws_region}"
