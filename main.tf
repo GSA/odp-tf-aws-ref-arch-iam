@@ -14,7 +14,7 @@ resource "aws_iam_account_password_policy" "grace_iam_password_policy" {
   require_symbols                = true
   allow_users_to_change_password = true
   max_password_age               = 90
-  password_reuse_prevention      = 10
+  password_reuse_prevention      = 24
 }
 
 # --------------------
@@ -199,15 +199,6 @@ resource "aws_iam_policy" "remote_access" {
   policy      = templatefile("${path.module}/templates/remote_access.tpl", { 
     ip_whitelist = var.ip_whitelist  
   } )
-}
-
-
-## assume organization account
-resource "aws_iam_policy" "assume_org_account_management" {
-  name        = "${var.project}-assume-org-account-management"
-  description = "Allow access to assume role for view only access to billing and usage"
-  path        = "/"
-  policy      = file("${path.module}/files/assume_org_account_management.json" )  
 }
 
 ## assume admin policy
