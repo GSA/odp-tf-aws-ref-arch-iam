@@ -5,7 +5,7 @@
           "Sid": "VisualEditor0",
           "Effect": "Allow",
           "Action": [
-  "acm:*",
+              "acm:*",
               "apigateway:*",
               "artifact:*",
               "autoscaling:*",

@@ -208,6 +208,7 @@ resource "aws_iam_policy" "assume_iam_admin_operations" {
   path        = "/"
   policy      = templatefile("${path.module}/templates/assume_iam_admin_operations.tpl", { 
     project = var.project 
+    aws_account_id = var.aws_account_id
     } )  
 }
 

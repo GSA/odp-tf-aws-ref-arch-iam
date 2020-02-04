@@ -96,7 +96,6 @@
               "iam:ListServiceSpecificCredentials",
               "iam:ListMFADevices",
               "iam:GetAccountSummary",
-              "sts:AssumeRole",
               "sts:GetSessionToken"
           ],
           "Resource": "*",
