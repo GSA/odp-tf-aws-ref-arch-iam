@@ -7,7 +7,7 @@
            "sts:AssumeRole"
         ],
         "Resource":[  
-           "arn:aws:iam::*:role/${project}-iam-admin-operations"
+           "arn:aws:iam::${aws_account_id}:role/${project}-iam-admin-operations"
         ]
      }
   ]
