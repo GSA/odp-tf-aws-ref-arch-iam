@@ -223,6 +223,18 @@ resource "aws_iam_policy" "assume_full_admin_management" {
     } ) 
 }
 
+## assume incidense response policy
+resource "aws_iam_policy" "assume_incident_response_secops" {
+  name        = "${var.project}-assume-incident-response-secops"
+  description = "Break glass - switch role to gain incident response secops access"
+  path        = "/"
+  policy      = templatefile("${path.module}/templates/assume_incident_response_secops.tpl", { 
+    project = var.project 
+    aws_account_id = var.aws_account_id
+    cross_aws_account_id = var.cross_aws_account_id // place holder for cross account access
+    } ) 
+}
+
 ## Grace secops IR policy
 resource "aws_iam_policy" "incident_response_secops" {
   name        = "${var.project}-incident-response-secops"
@@ -270,11 +282,15 @@ resource "aws_iam_group_policy_attachment" "assume_full_admin_management" {
 }
 
 ## 
-
-resource "aws_iam_group_policy_attachment" "incident_response_secops" {
+resource "aws_iam_group_policy_attachment" "assume_incident_response_secops" {
   group      = aws_iam_group.incident_response.name
-  policy_arn = aws_iam_policy.incident_response_secops.arn
+  policy_arn = aws_iam_policy.assume_incident_response_secops.arn
 }
+
+# resource "aws_iam_group_policy_attachment" "incident_response_secops" {
+#   group      = aws_iam_group.incident_response.name
+#   policy_arn = aws_iam_policy.incident_response_secops.arn
+# }
 
 # Defaults taken from Grace prod
 
