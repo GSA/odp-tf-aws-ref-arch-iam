@@ -13,6 +13,11 @@ variable "aws_account_id" {
   description = "aws account ID"
 }
 
+# place holder for cross account access
+variable "cross_aws_account_id" {
+  description = "aws account ID"
+}
+
 variable "ip_whitelist" {
   description = "source IP whitelist"
 }
