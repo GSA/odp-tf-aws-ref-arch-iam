@@ -18,7 +18,6 @@ commands:
       - run:
           name: Run Terraform commands. 
           command: |
-            . ${BASH_ENV}
             export tf_destroy=<< parameters.also_destroy >>
             export tf_command=<< parameters.run_command >>
 
