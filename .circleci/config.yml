@@ -4,6 +4,8 @@ commands:
 
   tflint: 
     description: "Runs tflint against terraform code."
+    docker:
+      - image: hashicorp/terraform:latest
     parameters:     
       terraform_dir:
         type: string
