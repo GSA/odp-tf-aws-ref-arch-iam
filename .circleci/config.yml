@@ -70,7 +70,8 @@ commands:
             sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.19.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
             # Run tfsec
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
-            
+            # All steps are done
+            echo "All steps are done"            
 jobs:
 
   terraform-checker:
