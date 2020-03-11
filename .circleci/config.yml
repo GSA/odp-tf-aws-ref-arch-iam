@@ -71,6 +71,7 @@ jobs:
     docker:
       - image: hashicorp/terraform:latest
     steps:
+      - checkout
       - run-terraform:
           terraform_dir: example
           run_command: validate
@@ -96,4 +97,4 @@ workflows:
   tflint_and_tfsec:    
     jobs:
       - terraform-checker
-      - tfsec     
+      # - tfsec     
