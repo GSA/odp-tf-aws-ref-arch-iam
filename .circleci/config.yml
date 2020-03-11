@@ -66,15 +66,9 @@ commands:
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
             # Download and install tfsec
             sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.19.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
+            # Add below echo to fix this issue - sudo: setrlimit(RLIMIT_CORE): Operation not permitted
+            echo "Set disable_coredump false" >> /etc/sudoers
             # Run tfsec
-            echo "which tfsec"
-            which tfsec
-            echo "list files"
-            ls -al /usr/local/bin
-            echo "Check sudo file"
-            ls -al /etc/sudo*
-            echo "Run tfsec"
-            # /usr/local/bin/tfsec ./
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
             
 jobs:
