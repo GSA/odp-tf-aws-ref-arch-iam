@@ -65,7 +65,7 @@ commands:
             # Run tflint against all tf files starting from pwd.
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
             # Download and install tfsec
-            sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.13.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
+            sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.19.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
             # Run tfsec
             echo "which tfsec"
             which tfsec
