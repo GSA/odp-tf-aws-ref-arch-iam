@@ -64,7 +64,11 @@ commands:
             curl -L -o /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.13.2/tflint_linux_amd64.zip && unzip /tmp/tflint.zip -d /usr/local/bin
             # Run tflint against all tf files starting from pwd.
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
-
+            # Download and install tfsec
+            sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.13.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
+            # Run tfsec
+            find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
+            
 jobs:
 
   terraform-checker:
@@ -77,24 +81,9 @@ jobs:
           run_command: validate
       - tflint:
           terraform_dir: ./
-  
-  tfsec:
-    docker:
-      - image: circleci/golang:latest
-    steps:
-      - checkout
-      - run:
-          name: Install tfsec
-          command: env GO111MODULE=on go get -u github.com/liamg/tfsec/cmd/tfsec
-      - run:
-          name: Terraform static code analysis with tfsec
-          command: tfsec
 
 workflows:
   version: 2.1
   tflint-and-tfsec:    
     jobs:
       - terraform-checker
-      - tfsec:     
-          requires: 
-            - terraform-checker
