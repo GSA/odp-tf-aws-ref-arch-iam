@@ -75,9 +75,8 @@ jobs:
       - run-terraform:
           terraform_dir: example
           run_command: validate
-
       - tflint:
-          terraform_dir: example   
+          terraform_dir: ./   
   
   tfsec:
     docker:
