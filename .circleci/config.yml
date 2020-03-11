@@ -2,10 +2,53 @@ version: 2.1
 
 commands:
 
+  run-terraform:
+    description: "Run Terraform commands."
+    parameters:
+      run_command:
+        type: string
+        default: "validate"
+      also_destroy:
+        type: string
+        default: "false"        
+      terraform_dir:
+        type: string
+        default: "terraform"
+    steps:
+      - run:
+          name: Run Terraform commands. 
+          command: |
+            . ${BASH_ENV}
+            export tf_destroy=<< parameters.also_destroy >>
+            export tf_command=<< parameters.run_command >>
+
+            cd << parameters.terraform_dir >> 
+            
+
+            terraform version
+
+            if [ "${tf_command}" != "validate" ]
+            then
+              terraform init -backend-config="bucket=${BACKEND_BUCKET}" -backend-config="key=terraform-states/${CIRCLE_PROJECT_REPONAME}/${TF_VAR_appenv}" -backend-config="region=${TF_VAR_aws_region}"
+            else
+              terraform init
+            fi
+
+            if [ "${tf_destroy}" != "only" ]
+            then  
+              terraform << parameters.run_command >>  
+            fi
+            
+            #Destroy infrastructure if requested 
+            
+            if [ "${tf_destroy}" != "false" ]
+            then 
+              terraform destroy -var-file=../terraform/ref-arch.tfvars -auto-approve  
+            fi
+
+
   tflint: 
     description: "Runs tflint against terraform code."
-    docker:
-      - image: hashicorp/terraform:latest
     parameters:     
       terraform_dir:
         type: string
@@ -24,28 +67,17 @@ commands:
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
 
 jobs:
-  terraform-plan:
+
+  terraform-checker:
     docker:
       - image: hashicorp/terraform:latest
     steps:
+      - run_terraform:
+          terraform_dir: example
+          run_command: validate
+
       - tflint:
-          terraform_dir: terraform   
-      - run:
-          name: terraform init
-          terraform_dir: terraform
-          command: find . -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && terraform init -input=false -backend=false) || exit 1; done
-      - run:
-          name: terraform fmt
-          terraform_dir: terraform
-          command: if [[ -n "$(terraform fmt -write=false)" ]]; then echo "Some terraform files need be formatted, run 'terraform fmt' to fix"; exit 1; fi           
-      - run: 
-          name: terraform validate
-          terraform_dir: terraform
-          command: validate -var-file=../terraform/ref-arch.tfvars      
-      - run: 
-          name: terraform plan
-          terraform_dir: terraform          
-          command: plan -input=false -var-file=../terraform/ref-arch.tfvars
+          terraform_dir: example   
   
   tfsec:
     docker:
@@ -64,5 +96,5 @@ workflows:
   version: 2.1
   tflint_and_tfsec:    
     jobs:
-      - terraform-plan
+      - terraform-checker
       - tfsec     
