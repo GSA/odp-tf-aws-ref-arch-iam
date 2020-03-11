@@ -1,31 +1,50 @@
 version: 2.1
 
-jobs: 
-  validate_terraform_lint:
-    environment:
-        AWS_DEFAULT_REGION: us-east-1
-    docker:
-      - image: hashicorp/terraform:light
+commands:
+
+  tflint: 
+    description: "Runs tflint against terraform code."
+    parameters:     
+      terraform_dir:
+        type: string
+        default: "terraform"
     steps:
-      - checkout
       - run:
-          name: Install curl
-          command: apk add --update curl && apk upgrade
+          name: Export required environment variables.
+          command: |
+            # Change directories to the desired source directory
+            cd << parameters.terraform_dir >>
+            # Install curl to allow for tflint download
+            apk add --update curl && apk upgrade
+            # Downland and unzip tflint
+            curl -L -o /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.13.2/tflint_linux_amd64.zip && unzip /tmp/tflint.zip -d /usr/local/bin
+            # Run tflint against all tf files starting from pwd.
+            find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
+
+jobs:
+  terraform-plan:
+    docker:
+      - image: hashicorp/terraform:latest
+    steps:
+      - tflint:
+          terraform_dir: terraform   
       - run:
           name: terraform init
+          terraform_dir: terraform
           command: find . -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && terraform init -input=false -backend=false) || exit 1; done
       - run:
-          name: Validate Terraform configurations
-          command: find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && terraform validate && echo "√ $m") || exit 1 ; done
-      - run:
-          name: Check if Terraform configurations are properly formatted
-          command: if [[ -n "$(terraform fmt -write=false)" ]]; then echo "Some terraform files need be formatted, run 'terraform fmt' to fix"; exit 1; fi
-      - run:
-          name: Install tflint
-          command: curl -L -o /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.13.2/tflint_linux_amd64.zip && unzip /tmp/tflint.zip -d /usr/local/bin
-      - run:
-          name: Check Terraform configurations with tflint
-          command: find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
+          name: terraform fmt
+          terraform_dir: terraform
+          command: if [[ -n "$(terraform fmt -write=false)" ]]; then echo "Some terraform files need be formatted, run 'terraform fmt' to fix"; exit 1; fi           
+      - run: 
+          name: terraform validate
+          terraform_dir: terraform
+          command: validate -var-file=../terraform/ref-arch.tfvars      
+      - run: 
+          name: terraform plan
+          terraform_dir: terraform          
+          command: plan -input=false -var-file=../terraform/ref-arch.tfvars
+  
   tfsec:
     docker:
       - image: circleci/golang:latest
@@ -37,9 +56,11 @@ jobs:
       - run:
           name: Terraform static code analysis with tfsec
           command: tfsec
+
+#These are the workflows that define what CircleCI actually does.
 workflows:
   version: 2.1
-  validate_terraform_changes:
+  tflint_and_tfsec:    
     jobs:
-      - validate_terraform_lint
-      - tfsec
+      - terraform-plan
+      - tfsec     
