@@ -64,14 +64,19 @@ commands:
             curl -L -o /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.13.2/tflint_linux_amd64.zip && unzip /tmp/tflint.zip -d /usr/local/bin
             # Run tflint against all tf files starting from pwd.
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
-            # Add below echo to fix this issue - sudo: setrlimit(RLIMIT_CORE): Operation not permitted
-            # echo "Set disable_coredump false" >> /etc/sudoers
             # Download and install tfsec
             sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.19.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
             # Run tfsec
+            echo "which tfsec"
+            which tfsec
+            echo "list files"
+            ls -al /usr/local/bin
+            echo "Check sudo file"
+            ls -al /etc/sudo*
+            echo "Run tfsec"
+            # /usr/local/bin/tfsec ./
             find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
-            # All steps are done
-            echo "All steps are done"            
+            
 jobs:
 
   terraform-checker:
