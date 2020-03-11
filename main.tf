@@ -155,7 +155,7 @@ POLICY
 ## Not 100% sure the idea of having dependencies in this role is a good one.
 ## Role for cloudwatch delivery.
 resource "aws_iam_role" "cloudwatch_delivery" {
-  name = "${var.project}-cloudwatch_delivery"
+  name               = "${var.project}-cloudwatch_delivery"
   assume_role_policy = <<END_OF_POLICY
 {
   "Version": "2012-10-17",
@@ -196,9 +196,9 @@ resource "aws_iam_policy" "remote_access" {
   name        = "${var.project}-remote-access"
   path        = "/"
   description = "Restrict remote access to whitelisted source IPs"
-  policy      = templatefile("${path.module}/templates/remote_access.tpl", { 
-    ip_whitelist = var.ip_whitelist  
-  } )
+  policy = templatefile("${path.module}/templates/remote_access.tpl", {
+    ip_whitelist = var.ip_whitelist
+  })
 }
 
 ## assume admin policy
@@ -206,10 +206,10 @@ resource "aws_iam_policy" "assume_iam_admin_operations" {
   name        = "${var.project}-assume-iam-admin-ops"
   description = "Switch role to manage IAM "
   path        = "/"
-  policy      = templatefile("${path.module}/templates/assume_iam_admin_operations.tpl", { 
-    project = var.project 
+  policy = templatefile("${path.module}/templates/assume_iam_admin_operations.tpl", {
+    project        = var.project
     aws_account_id = var.aws_account_id
-    } )  
+  })
 }
 
 ## assume fulladmin policy
@@ -217,10 +217,10 @@ resource "aws_iam_policy" "assume_full_admin_management" {
   name        = "${var.project}-assume-full-admin-management"
   description = "Break glass - switch role to gain full admin rights and Organizations access"
   path        = "/"
-  policy      = templatefile("${path.module}/templates/assume_full_admin_management.tpl", { 
-    project = var.project 
+  policy = templatefile("${path.module}/templates/assume_full_admin_management.tpl", {
+    project        = var.project
     aws_account_id = var.aws_account_id
-    } ) 
+  })
 }
 
 ## assume incidense response policy
@@ -228,11 +228,11 @@ resource "aws_iam_policy" "assume_incident_response_secops" {
   name        = "${var.project}-assume-incident-response-secops"
   description = "Break glass - switch role to gain incident response secops access"
   path        = "/"
-  policy      = templatefile("${path.module}/templates/assume_incident_response_secops.tpl", { 
-    project = var.project 
-    aws_account_id = var.aws_account_id
+  policy = templatefile("${path.module}/templates/assume_incident_response_secops.tpl", {
+    project              = var.project
+    aws_account_id       = var.aws_account_id
     cross_aws_account_id = var.cross_aws_account_id // place holder for cross account access
-    } ) 
+  })
 }
 
 ## Grace secops IR policy
@@ -240,7 +240,7 @@ resource "aws_iam_policy" "incident_response_secops" {
   name        = "${var.project}-incident-response-secops"
   description = "SecOps incident response policy"
   path        = "/"
-  policy      = file("${path.module}/files/incident_response_secops.json")  
+  policy      = file("${path.module}/files/incident_response_secops.json")
 }
 
 ## grace ops admin policy
