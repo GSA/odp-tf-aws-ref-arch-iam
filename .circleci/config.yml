@@ -54,7 +54,7 @@ commands:
         default: "terraform"
     steps:
       - run:
-          name: Export required environment variables.
+          name: Running tflint
           command: |
             # Change directories to the desired source directory
             cd << parameters.terraform_dir >>
@@ -76,7 +76,7 @@ jobs:
           terraform_dir: example
           run_command: validate
       - tflint:
-          terraform_dir: ./   
+          terraform_dir: ./
   
   tfsec:
     docker:
@@ -90,10 +90,11 @@ jobs:
           name: Terraform static code analysis with tfsec
           command: tfsec
 
-#These are the workflows that define what CircleCI actually does.
 workflows:
   version: 2.1
-  tflint_and_tfsec:    
+  tflint-and-tfsec:    
     jobs:
       - terraform-checker
-      # - tfsec     
+      - tfsec:     
+          requires: 
+            - terraform-checker
