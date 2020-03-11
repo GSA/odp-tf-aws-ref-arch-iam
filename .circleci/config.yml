@@ -59,7 +59,7 @@ commands:
             # Change directories to the desired source directory
             cd << parameters.terraform_dir >>
             # Install curl to allow for tflint download
-            apk add --update curl && apk upgrade
+            apk add --update curl && apk add --update sudo && apk upgrade
             # Downland and unzip tflint
             curl -L -o /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.13.2/tflint_linux_amd64.zip && unzip /tmp/tflint.zip -d /usr/local/bin
             # Run tflint against all tf files starting from pwd.
