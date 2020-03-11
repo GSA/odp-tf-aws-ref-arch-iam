@@ -54,7 +54,7 @@ commands:
         default: "terraform"
     steps:
       - run:
-          name: Running tflint
+          name: Running tflint and tfsec
           command: |
             # Change directories to the desired source directory
             cd << parameters.terraform_dir >>
@@ -74,8 +74,8 @@ commands:
             echo "Check sudo file"
             ls -al /etc/sudo*
             echo "Run tfsec"
-            /usr/local/bin/tfsec ./
-            # find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
+            # /usr/local/bin/tfsec ./
+            find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
             
 jobs:
 
