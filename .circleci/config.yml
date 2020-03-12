@@ -54,7 +54,7 @@ commands:
         default: "terraform"
     steps:
       - run:
-          name: Running tflint and tfsec
+          name: Running tflint and tfsec against terraform tf files
           command: |
             # Change directories to the desired source directory
             cd << parameters.terraform_dir >>
