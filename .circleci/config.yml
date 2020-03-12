@@ -69,10 +69,8 @@ commands:
             # Run tfsec
             echo "Run tfsec"
             tfsec ./
-            # find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tfsec && echo "√ $m") || exit 1 ; done
             
 jobs:
-
   terraform-checker:
     docker:
       - image: hashicorp/terraform:latest
