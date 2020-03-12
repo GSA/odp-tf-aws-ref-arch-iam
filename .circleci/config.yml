@@ -1,20 +1,89 @@
 version: 2.1
 
-jobs: 
-  validate_terraform:
+commands:
+
+  run-terraform:
+    description: "Run Terraform commands."
+    parameters:
+      run_command:
+        type: string
+        default: "validate"
+      also_destroy:
+        type: string
+        default: "false"        
+      terraform_dir:
+        type: string
+        default: "terraform"
+    steps:
+      - run:
+          name: Run Terraform commands. 
+          command: |
+            export tf_destroy=<< parameters.also_destroy >>
+            export tf_command=<< parameters.run_command >>
+
+            cd << parameters.terraform_dir >> 
+            
+
+            terraform version
+
+            if [ "${tf_command}" != "validate" ]
+            then
+              terraform init -backend-config="bucket=${BACKEND_BUCKET}" -backend-config="key=terraform-states/${CIRCLE_PROJECT_REPONAME}/${TF_VAR_appenv}" -backend-config="region=${TF_VAR_aws_region}"
+            else
+              terraform init
+            fi
+
+            if [ "${tf_destroy}" != "only" ]
+            then  
+              terraform << parameters.run_command >>  
+            fi
+            
+            #Destroy infrastructure if requested 
+            
+            if [ "${tf_destroy}" != "false" ]
+            then 
+              terraform destroy -var-file=../terraform/ref-arch.tfvars -auto-approve  
+            fi
+
+
+  tflint: 
+    description: "Runs tflint against terraform code."
+    parameters:     
+      terraform_dir:
+        type: string
+        default: "terraform"
+    steps:
+      - run:
+          name: Running tflint and tfsec
+          command: |
+            # Change directories to the desired source directory
+            cd << parameters.terraform_dir >>
+            # Install curl to allow for tflint download
+            apk add --update curl && apk add --update sudo && apk upgrade
+            # Downland and unzip tflint
+            curl -L -o /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.13.2/tflint_linux_amd64.zip && unzip /tmp/tflint.zip -d /usr/local/bin
+            # Run tflint against all tf files starting from pwd.
+            find . -name ".terraform" -prune -o -type f -name "*.tf" -exec dirname {} \;|sort -u | while read m; do (cd "$m" && tflint && echo "√ $m") || exit 1 ; done
+            # Download and install tfsec
+            sudo wget -O /usr/local/bin/tfsec https://github.com/liamg/tfsec/releases/download/v0.19.0/tfsec-linux-amd64 && sudo chmod +x /usr/local/bin/tfsec
+            # Run tfsec
+            echo "Run tfsec"
+            tfsec ./
+            
+jobs:
+  terraform-checker:
     docker:
       - image: hashicorp/terraform:latest
     steps:
-      - attach_workspace:
-          at: /tmp/workspace
       - checkout
-      - run:
-          name: Initialize and plan Terraform (check plan out here before approving!)
-          command: |
-            cd example && terraform init && terraform validate
+      - run-terraform:
+          terraform_dir: example
+          run_command: validate
+      - tflint:
+          terraform_dir: ./
 
 workflows:
   version: 2.1
-  validate_terraform_changes:
+  tflint-and-tfsec:    
     jobs:
-      - validate_terraform
+      - terraform-checker
