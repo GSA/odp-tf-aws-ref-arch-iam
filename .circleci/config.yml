@@ -46,7 +46,7 @@ commands:
             fi
 
 
-  tflint: 
+  tflint-tfsec: 
     description: "Runs tflint against terraform code."
     parameters:     
       terraform_dir:
@@ -54,7 +54,7 @@ commands:
         default: "terraform"
     steps:
       - run:
-          name: Running tflint and tfsec
+          name: Running tflint and tfsec against terraform tf files
           command: |
             # Change directories to the desired source directory
             cd << parameters.terraform_dir >>
@@ -79,7 +79,7 @@ jobs:
       - run-terraform:
           terraform_dir: example
           run_command: validate
-      - tflint:
+      - tflint-tfsec:
           terraform_dir: ./
 
 workflows:
